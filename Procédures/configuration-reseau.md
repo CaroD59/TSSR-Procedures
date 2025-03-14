@@ -1,216 +1,255 @@
-# Configuration Réseau
+# Configuration réseau
 
-## 1. Câble Console et Sécurisation
+## Câble console et sécurisation
 
-Le câble console permet de connecter un ordinateur à un switch pour effectuer la première configuration.
+Le câble console permet de connecter un ordinateur au switch pour effectuer la première configuration.  
+> La commande **enable** permet d'entrer en mode privilégié. 
 
-- **Commande `enable`** : Permet de passer en mode privilégié. Ce mode permet de consulter diverses configurations via la commande `show`.
+Le mode privilégié permet de consulter les différentes configurations à l'aide de la commande **show**, suivie de ce que l'on souhaite consulter.  
+> **configure terminal** permet de passer en mode de configuration du switch.
 
-- **Commande `configure terminal`** : Permet de passer en mode de configuration du switch.
+La première action à réaliser en mode configuration est de désactiver la recherche de nom de domaine, afin d'éviter des délais inutiles en cas de fausse manipulation :  
+**no ip domain-lookup**.
 
-### Sécurisation du Switch
-1. **Désactivation de la recherche de nom de domaine** :  
-   Pour éviter toute attente en cas de mauvaise manipulation, on désactive la recherche de noms avec la commande :  
-   `no ip domain-lookup`.
+Ensuite, il est nécessaire de sécuriser le switch en attribuant un mot de passe pour entrer en mode privilégié :  
+**enable secret _mot_de_passe_**. Une fois le mot de passe défini, il faut le crypter :  
+**service password-encryption**.
 
-2. **Sécurisation du mode privilégié** :  
-   Définir un mot de passe pour le mode privilégié :  
-   `enable secret <mot_de_passe>`.  
-   Puis crypter ce mot de passe :  
-   `service password-encryption`.
+Il faut également sécuriser l'accès au switch via le câble console. Pour cela, on se place en configuration de ce câble :  
+**line console 0**. Puis, on définit un mot de passe :  
+**password _mot_de_passe_**.  
+Ensuite, il faut indiquer **login** pour valider la vérification par mot de passe.
 
-3. **Sécurisation de l'accès via le câble console** :  
-   Aller dans la configuration du port console :  
-   `line console 0`.  
-   Définir un mot de passe :  
-   `password <mot_de_passe>`.  
-   Et activer la vérification du mot de passe :  
-   `login`.
+## Accès à distance (SSH)
 
-## 2. Accès à Distance
+Pour pouvoir administrer le switch à distance, il faut configurer le protocole SSH. Voici les étapes :
 
-Pour accéder à distance au switch via SSH, il faut configurer le protocole SSH.
+1. **Nommer le switch** :  
+   En mode configuration :  
+   **hostname _nom_du_switch_**
 
-### Configuration de SSH :
-1. **Nom du Switch** :  
-   `hostname <nom_du_switch>`.
+2. Créer un nom d'utilisateur et un mot de passe :  
+   **username _username_ password _mot_de_passe_**
 
-2. **Création d'un utilisateur** :  
-   `username <nom_utilisateur> password <mot_de_passe>`.
+3. Accéder à la ligne de connexion :  
+   **line vty 0 1** (Les numéros 0 et 1 correspondent au nombre de connexions simultanées autorisées, ici 2.)
 
-3. **Configuration de la ligne VTY** :  
-   Pour permettre deux connexions simultanées via SSH :  
-   `line vty 0 1`.  
-   Configurer le protocole SSH sur cette ligne :  
-   `transport input ssh`.  
-   Puis indiquer l'utilisation d'un mot de passe local :  
-   `login local`.
+4. Configurer le transport pour SSH :  
+   **transport input ssh** (Cela indique au switch qu'on utilisera SSH sur cette ligne.)
 
-4. **Nom de domaine** :  
-   Création du nom de domaine nécessaire à la génération de la clé SSH :  
-   `ip domain-name <nom_du_domaine>`.
+5. Définir la méthode de connexion :  
+   **login local** (Cela indique au switch de vérifier les informations d'identification dans sa table d'utilisateurs.)
 
-5. **Génération de la clé SSH** :  
-   La taille de la clé RSA peut être choisie, généralement 2048 bits :  
-   `crypto key generate rsa general-keys modulus 2048`.
+6. Créer un nom de domaine pour la clé de chiffrement :  
+   **ip domain-name _nom_du_domaine_**
 
-## 3. Sécurisation des Ports
+7. Générer la clé SSH :  
+   **crypto key generate rsa general-keys modulus _taille_**  
+   (La taille indique le nombre de bits souhaité pour la clé.)
 
-La sécurisation des ports permet de restreindre l'accès aux ports du switch à des adresses MAC spécifiques.
+## Sécurisation des ports
 
-### Configuration des ports :
-1. **Mode access** :  
-   Configurer le port pour qu'il soit en mode access, ce qui signifie qu'il est connecté à un périphérique final (PC, imprimante, etc.) :  
-   `switchport mode access`.
+La sécurisation des ports d'un switch consiste à autoriser certaines adresses MAC (ou plusieurs) et à bloquer les autres. Voici comment procéder :
 
-2. **Activation de la sécurité des ports** :  
-   `switchport port-security`.
+1. Mettre l'interface en mode **access** :  
+   **switchport mode access**  
+   (Cela précise que l'interface est connectée à un dispositif final.)
 
-3. **Assignation d'une adresse MAC** :
+2. Activer le service de **port security** :  
+   **switchport port-security**
+
+3. Assignation d'une adresse MAC à l'interface :  
    - **Manuelle** :  
-     `switchport port-security mac-address <adresse_mac>`.
-   - **Automatique** (sticky) :  
-     `switchport port-security mac-address sticky`.
+     **switchport port-security mac-address _adresse_mac_**  
+   - **Automatique (sticky)** :  
+     **switchport port-security mac-address sticky**  
+     (Le switch attribuera l'adresse MAC de la première trame qu'il recevra à ce port.)
 
-4. **Définir le nombre maximum d'adresses MAC autorisées sur un port** :  
-   `switchport port-security maximum <nombre>`.
+4. Définir le nombre maximal d'adresses MAC autorisées sur ce port :  
+   **switchport port-security maximum _nombre_**
 
-5. **Comportement en cas de violation** :  
-   Lorsqu'une adresse MAC non autorisée est détectée, il y a plusieurs options :  
-   - **Shutdown** : Désactive l'interface et nécessite une intervention manuelle pour la réactiver.  
-     `shutdown` puis `no shutdown` pour réactiver.
-   - **Protect** : Bloque les trames avec des adresses MAC non autorisées.  
-   - **Restrict** : Bloque les trames non autorisées et envoie une alerte SNMP.  
-     `switchport port-security violation <shutdown|protect|restrict>`.
+5. Choisir la réaction du switch en cas de violation de sécurité :  
+   - **shutdown** :  
+     L'interface est désactivée et doit être réactivée manuellement avec **no shutdown**.
+   - **protect** :  
+     Les trames avec des adresses MAC non autorisées sont bloquées.
+   - **restrict** :  
+     Les violations sont bloquées et une alerte SNMP est envoyée. Le compteur de violations est incrémenté.
 
-6. **Consultation de la sécurité des ports** :  
-   Pour afficher la liste des interfaces sécurisées, le nombre de violations, etc. :  
-   `show port-security`.
+6. Appliquer la méthode de violation :  
+   **switchport port-security violation _méthode_**
 
-## 4. Configuration des VLANs
+7. Pour consulter l'état de la sécurité des ports :  
+   **show port-security**
 
-Les VLANs permettent de créer plusieurs sous-réseaux sur un même câble physique.
+## Configuration des VLANs
 
-### Types de VLAN :
-- **VLAN par port** : Le switch associe le port à un VLAN indépendamment de l'adresse MAC.
-- **VLAN par adresse MAC** : Le switch associe l'adresse MAC du périphérique à un VLAN.
+Les VLANs sont utilisés lorsqu'il y a plusieurs sous-réseaux sur un même câble physique.  
+Il existe deux types de VLANs :
 
-### Configuration d'un VLAN :
-1. **Création d'un VLAN** :  
-   `vlan <numéro_du_vlan>`.
+- **Par port** : Le switch associe un port à un VLAN sans tenir compte de l'appareil connecté.
+- **Par adresse MAC** : Le switch assigne un VLAN en fonction de l'adresse MAC de la machine connectée.
 
-2. **Affectation d'un VLAN à un port** :  
-   - Configurer le port en mode access pour un périphérique final :  
-     `switchport mode access`.  
-   - Associer un VLAN au port :  
-     `switchport access vlan <numéro_du_vlan>`.
+### Création d'un VLAN
 
-3. **Mode trunk pour l'interconnexion entre switches** :  
-   Pour autoriser plusieurs VLANs à circuler sur une même interface :  
-   `switchport mode trunk`.
+Pour créer un VLAN :  
+**vlan _numéro_du_vlan_**
 
-4. **Nombre maximal de VLANs sur un trunk** :  
-   Le nombre maximum de VLANs qu'un port trunk peut supporter est 4095.
+### Affectation d'un VLAN à un port
 
-## 5. Routage Inter-VLAN
+1. **Mode Access** :  
+   **switchport mode access**  
+   (Cela précise que le port est connecté à un dispositif final.)
 
-Le routage inter-VLAN permet de relier plusieurs VLANs, nécessitant un routeur ou un switch de niveau 3.
+2. **Attribution du VLAN** :  
+   **switchport access vlan _numéro_**
 
-### Configuration du "Routeur-on-Stick" :
-1. **Interface virtuelle pour chaque VLAN** :  
-   `interface gigabitethernet0/0.<numéro_du_vlan>`.  
-   Attribuer une adresse IP à cette interface virtuelle :  
-   `ip address <adresse_ip> <masque>`.
+### Configuration d'un Trunk
 
-2. **Encapsulation des trames** :  
-   Pour spécifier que les trames sont de type VLAN 802.1Q :  
-   `encapsulation dot1Q <numéro_du_vlan>`.
+Les interfaces reliant les équipements réseau doivent être en mode trunk pour autoriser les trames de plusieurs VLANs à passer :  
+**switchport mode trunk**
 
-## 6. Routage Dynamique
+**Limite** : Un maximum de 255 VLANs peut être configuré en simultané.
 
-Le routage dynamique permet de gérer la transmission des informations de routage entre les routeurs. Il existe plusieurs protocoles, dont RIP, OSPF et EIGRP.
+## Routage Inter-VLAN
 
-### 6.1. Routage avec RIP (Routing Information Protocol)
+Pour connecter plusieurs VLANs, un routeur est nécessaire. Le montage le plus courant est un **"routeur-on-stick"** : un seul câble relie le routeur au switch qui regroupe les différents VLANs.
 
-RIP utilise un algorithme de vecteur de distance et fonctionne avec des adresses IP classful.
+### Création d'interfaces virtuelles
 
-- **Configuration RIP** :  
-  `router rip`.  
-  `version 2` (pour la version 2, plus sécurisée).  
-  `network <adresse_ip_du_réseau>` (définir les réseaux directement connectés).
+Pour chaque VLAN, il faut créer une interface virtuelle sur le routeur :  
+**interface gigabitEthernet0/0._numéro_du_vlan_**
 
-- **Configuration d'une route par défaut** :  
-  `default-information originate`.
+1. Ne pas attribuer d'adresse IP à l'interface physique mais l'activer :  
+   **no shutdown**
 
-### 6.2. Routage avec OSPF (Open Shortest Path First)
+2. Configurer l'adresse IP de l'interface virtuelle :  
+   **ip address _adresse_ip_ _masque_**
 
-OSPF utilise un algorithme de plus court chemin (Dijkstra) pour déterminer la route optimale. Il prend en compte la bande passante des liens et fonctionne par zones.
+3. Encapsuler les trames VLAN avec la commande :  
+   **encapsulation dot1Q _numéro_du_vlan_**
 
-- **Configuration OSPF** :  
-  `router ospf 1`.  
-  `network <adresse_du_réseau> <masque_inversé> area <numéro_de_zone>`.
+## Routage dynamique (RIP)
 
-- **Configuration d'une route par défaut** :  
-  `default-information originate`.
+Le **RIP** permet aux routeurs de communiquer entre eux pour déterminer les meilleures routes. Il utilise un algorithme de vecteur de distance basé sur le nombre de "sauts" (stations intermédiaires). 
+Il fonctionne sur la base des adresses IP classful, en regardant la configuration des réseaux: **show running-config** ou **show ip rip database** on remarquera que les adresses réseaux que nous lui avons donné ne respecte pas forcément le sous-découpage que nous avons réalisé. Cependant en regardant les **routes** grâce à la commande: **show ip route** les adresses réseau ainsi que leur masque correspondant sont indiqué correctement.
 
-### 6.3. Routage avec EIGRP (Enhanced Interior Gateway Routing Protocol)
+### Configuration du RIP
 
-EIGRP est un protocole de routage propriétaire Cisco qui utilise un calcul plus précis que RIP et OSPF.
+1. Entrer en mode configuration RIP :  
+   **router rip**
 
-- **Configuration EIGRP** :  
-  `router eigrp 1`.  
-  `network <adresse_du_réseau>`.
+2. Sélectionner la version 2 (plus sécurisée et supporte le VLSM) :  
+   **version 2**
 
-## 7. Access Control List (ACL)
+3. Ajouter les réseaux auxquels le routeur a accès :  
+   **network _adresse_ip_du_réseau_**
 
-Les ACL permettent de filtrer le trafic réseau en fonction de l'adresse source, de l'adresse de destination et du protocole.
+4. Si une route par défaut doit être transmise :  
+   **default-information originate**
 
-### 7.1. ACL Standard
+## Routage dynamique (OSPF)
 
-Une ACL standard filtre uniquement sur l'adresse source.
+**OSPF** fonctionne selon un algorithme de plus court chemin (Dijkstra), qui prend en compte les coûts (poids) des chemins. Il est également basé sur un système de zones pour limiter la communication dans un réseau large. Il prend en compte la vitesse d'un câble et l'utilise comme **poids**; additionnant tous les poids jusqu'à destination. Le chemin qui a le poids le plus faible est sélectionné pour être la route qui sera mise dans la table de routage.
 
-- **Création d'une ACL standard** :  
-  `access-list <numéro (1-99)> deny/permit <adresse_source>`.  
-  `ip access-list standard <nom> deny/permit <adresse_source>`.
+### Configuration de OSPF
 
-- **Application de l'ACL à une interface** :  
-  `ip access-group <numéro/nom> <in|out>`.
+1. Entrer en mode configuration OSPF :  
+   **router ospf 1**
 
-### 7.2. ACL Étendue
+2. Ajouter les réseaux et leurs zones :  
+   **network _adresse_du_réseau_ _masque_inversé_ area _numéro_de_zone_**
 
-Les ACL étendues permettent un filtrage plus précis (source, destination, protocole, ports).
+3. Si une route par défaut doit être transmise :  
+   **default-information originate**
 
-- **Création d'une ACL étendue** :  
-  `access-list <numéro (100-199)> deny/permit <protocole> <adresse_source> <masque_inversé> <adresse_destination> <masque_inversé>`.  
-  Par exemple :  
-  `access-list 100 deny tcp any host 192.168.1.1 eq 80`.
+## Routage dynamique (EIGRP)
 
-## 8. Network Address Translation (NAT)
+**EIGRP** est un protocole propriétaire de Cisco qui prend en compte la bande passante et le délai des interfaces pour déterminer la meilleure route. Il est impossible de le déployer si un appareil de la topologie n'est pas de Cisco.
 
-NAT permet de traduire les adresses IP privées en publiques et vice versa.
+### Configuration de EIGRP
 
-### 8.1. NAT Statique
+1. Entrer en mode configuration EIGRP :  
+   **router eigrp 1**
 
-Le NAT statique permet d’associer une adresse IP privée à une adresse IP publique.
+2. Ajouter les réseaux auxquels le routeur a accès :  
+   **network _ip_du_réseau_**
 
-- **Configuration NAT statique** :  
-  `ip nat inside source static <ip_privée> <ip_publique>`.  
-  Sur l'interface entrant : `ip nat inside`.  
-  Sur l'interface sortante : `ip nat outside`.
+3. La valeur **1** dans la commande d'EIGRP doit être la même sur tous les routeurs de la topologie pour qu'ils puissent communiquer.
 
-### 8.2. NAT Dynamique
+## Routage inter-protocoles
 
-Le NAT dynamique permet d'associer plusieurs adresses privées à une ou plusieurs adresses publiques.
+Pour faire communiquer deux protocoles de routage différents, il faut utiliser la commande :  
+**redistribute _nom_du_protocole_**
 
-- **Configuration NAT dynamique** :  
-  `access-list <numéro> permit <adresse_ip_source> <masque>`.  
-  `ip nat pool <nom_pool> <ip_début> <ip_fin> netmask <masque>`.  
-  `ip nat inside source list <nom_list> pool <nom_pool>`.  
-  Ajouter `overload` pour la surcharge.
+## Access Control List (ACL)
 
-### 8.3. Port Address Translation (PAT)
+Les **ACL** permettent de restreindre l'accès à certaines parties du réseau, selon l'adresse IP source ou d'autres critères.
 
-Le PAT permet d'utiliser des numéros de port pour traduire plusieurs adresses privées en une seule adresse publique.
+### Types d'ACL
 
-- **Configuration PAT** :  
-  `ip nat inside source list <numéro_list> interface <interface> overload`.
+- **Standard** : Restrictions basées uniquement sur l'adresse IP source.
+- **Extended** : Restrictions plus détaillées, y compris l'adresse source et de destination, le protocole, et le port.
+
+### Configuration d'ACL standard
+
+1. Créer une ACL standard :  
+   **access-list _numéro_ deny/permit _adresse_source_**
+
+2. Appliquer l'ACL à une interface :  
+   **ip access-group _numéro/nom_ in/out**
+
+### Configuration d'ACL étendue
+
+1. Créer une ACL étendue :  
+   **access-list _numéro_ deny/permit _protocole_ _adresse_source_ _masque_inversé_ _adresse_destination_ _masque_inversé_ _port_**
+
+2. Appliquer l'ACL :  
+   **ip access-group _numéro_ in/out**
+
+### Remarques
+
+- Les ACL sont traitées de la règle la plus précise à la plus générale.
+- Il est recommandé de conserver une copie des ACL dans un bloc-notes pour pouvoir les réutiliser ou les modifier facilement.
+
+eq = equal
+neq = non equal
+lt = less than
+gt = greater than
+
+## Network Address Translation (NAT)
+
+NAT permet de traduire les adresses IP privées en adresses IP publiques pour l'accès à Internet. Il existe trois types de NAT :
+
+1. **NAT statique** : Une adresse privée est mappée à une adresse publique.
+2. **NAT dynamique** : Plusieurs adresses privées sont mappées à une ou plusieurs adresses publiques.
+3. **PAT (Port Address Translation)** : Plusieurs adresses privées sont mappées à une seule adresse publique, avec un port unique pour chaque connexion.
+
+### Configuration de NAT statique
+Il permet d'attribuer une adresse privée à une adresse publique. 
+
+1. **ip nat inside source static _adresse_privée_ _adresse_publique_**
+
+Sur l'interface d'entrée dans le routeur on précise **ip nat inside** pour indiquer au routeur que l'adresse à traduire arrivera de ce port.
+Sur l'interface de sortie (vers le réseau WAN) on indique **ip nat outside** pour dire au routeur sur quel port envoyé l'adresse traduite.
+
+### Configuration de NAT dynamique
+Le NAT dynamique permet d'associer plusieurs adresses privées à une ou plusieurs adresses publiques. Cependant si toutes les adresses IP publiques sont occupées, la machine suivante qui demande accès à internet ne pourra pas obtenir d'adresse tant qu'un autre appareil ne se sera pas déconnecté.
+
+1. Créer une access-list pour les réseaux autorisés à sortir :  
+   **access-list _numéro_ permit _ip_source_ _masque_**
+
+2. Créer un pool d'adresses publiques :  
+   **ip nat pool _nom_du_pool_ _ip_de_début_ _ip_de_fin_ netmask _masque_**
+
+3. Appliquer la traduction :  
+   **ip nat inside source list _nom_de_l'access-list_ pool _nom_du_pool_**
+
+Dans le cas où nous avons plus d'adresses privées ayant besoin d'accéder à internet (on parle de nat avec surcharge), on ajoute **overload** à la fin de la dernière commande.
+
+### Configuration de PAT
+Le PAT permet de déplacer le problème en attribuant à chaque demande de traduction un numéro de port aléatoire et unique qui permettra d'identifier quel est la machine qui souhaite communiquer.
+
+1. Créer une access-list pour les réseaux autorisés à sortir.
+2. Appliquer la commande PAT :  
+   **ip nat inside source list _nom_de_l'access-list_ interface _nom_de_l'interface_ overload**
