@@ -1,0 +1,282 @@
+Notions de sécurité système et réseaux
+
+------------------------------------------------------------------
+
+1/ Création d'un server PfSense
+
+- Création de quatre cartes réseaux
+	1- En NAT -> em0
+	2- En Custom vmnet2 em1 pour la machine windows client -> 192.168.10.10  
+	3- En Custom vmnet3 em2 pour la machine windows server -> 192.168.20.10
+	4- En Custom vmnet4 em3 pour la machine linux -> 192.168.30.10
+
+- PFSense s'installe
+	- Should Vlans be set up now ? no
+	- WAN Interface ? em0
+	- LAN Interface ? em1
+	- WINDOWSSERVER Interface ? em2
+	- DMZ Interface ? em3
+	- 1 - Assign Interfaces pour mettre les IP et nom
+
+
+		WAN
+		192.168.75.10 -> Vmnet8 -> Nat dans Virtual Network Editor
+
+		LAN ou Client Windows
+		Adresse IP
+		192.168.10.20
+		Masque de sous-réseau
+		255.255.255.0
+		Passerelle par défaut
+		192.168.10.10
+		
+		Server DNS préféré
+		192.168.20.20
+
+		Windows Server
+		Adresse IP
+		192.168.20.20
+		Masque de sous-réseau
+		255.255.255.0
+		Passerelle par défaut
+		192.168.20.10
+		
+		Server DNS préféré
+		192.168.20.20
+
+		DMZ - Linux
+		Adresse IP
+		192.168.30.20
+		Masque de sous-réseau
+		255.255.255.0
+		Passerelle par défaut
+		192.168.30.10
+
+
+- Aller sur https://192.168.10.10/
+	- Interfaces -> Modifier les interfaces et mettre les IP
+	- Firewall -> Rules -> WINDOWSSERVER
+		1- Add -> Protocol ICMP -> any
+		2- Add -> Protocol ICMP -> any -> Destination WINDOWSSERVER address
+	- Firewall -> Rules -> DMZ
+		1- Add -> Protocol ICMP -> any
+
+------------------------------------------------------------------
+
+2/ Création Windows Server
+
+- On met les addresses ip et on décoche Ipv6
+	-> Ajout AD DS + DNS création de domaine
+
+- Ajouter tous les droits à un utilisateur :
+	-> Membre de -> con -> Ctrl + A -> Valider
+					adm -> Ctrl + A -> Valider
+
+------------------------------------------------------------------
+
+3/ Création Windows Client
+
+On décoche Ipv6, on met les ip et on change juste le nom d'ordi pas besoin de mettre le domaine
+
+- Avoir internet :
+	-> Aller sur https://192.168.10.10/
+		- Firewall -> Rules -> WINDOWSSERVER
+			1- Add -> Protocol TCP/UDP -> Source WINDOWSSERVER subnets -> Destination any et DNS (53)
+			2- Add -> Protocol TCP/UDP -> any
+		- Firewall -> Rules -> LAN
+			1- Add -> Protocol TCP -> Source Address or Alias 192.168.10.20 -> Destination invert match LAN subnets HTTP (80)
+			2- Add -> Protocol TCP -> Source Address or Alias 192.168.10.20 -> Destination invert match LAN subnets HTTPS (443)
+			3- Add -> Protocol TCP/UDP -> any
+			
+- Joindre un domaine :
+	-> Aller sur https://192.168.10.10/
+		- Firewall -> Rules -> WINDOWSSERVER
+			1- DNS (53) TCP/UDP
+			2- HTTP (80) TCP
+			3- HTTPS (443) TCP
+			4- KERBEROS (88) TCP/UDP
+			5- LDAP (389) TCP/UDP
+			6- LDAPS (636) TCP
+			7- SMB (137, 138) UDP (139, 445) TCP 
+			8- RPC (135) TCP/UDP 
+			9- LEMP
+			10- DYNAMIC (49152, 65535) TCP
+		- Firewall -> Rules -> LAN
+			1- DNS (53) TCP/UDP
+			2- HTTP (80) TCP
+			3- HTTPS (443) TCP
+			4- KERBEROS (88) TCP/UDP
+			5- LDAP (389) TCP/UDP
+			6- LDAPS (636) TCP
+			7- SMB (137, 138) UDP (139, 445) TCP 
+			8- RPC (135) TCP/UDP 
+			9- LEMP
+			10- DYNAMIC (49152, 65535) TCP
+
+------------------------------------------------------------------
+
+3/ Création Linux Debian
+
+- Changer l'adresse ip et la passerelle
+	- ip addr add ip/masque dev ens33
+	- ip add default via ip/masque
+- Vérification 
+	- ip a
+	- ip route show
+		
+------------------------------------------------------------------
+
+Liste des protocoles
+
+1. DNS (53) TCP/UDP → Traduit les noms de domaine en adresses IP pour accéder aux sites web.  
+2. HTTP (80) TCP → Permet la navigation web non sécurisée.  
+3. HTTPS (443) TCP → Version sécurisée de HTTP, chiffrant les échanges sur le web.  
+4. KERBEROS (88) TCP/UDP → Authentifie de manière sécurisée les utilisateurs dans un réseau.  
+5. LDAP (389) TCP/UDP → Gère les annuaires (ex : comptes utilisateurs) dans un réseau.  
+6. LDAPS (636) TCP → Version sécurisée de LDAP utilisant du chiffrement.  
+7. SMB (137, 138 UDP / 139, 445 TCP) → Partage de fichiers et imprimantes sur un réseau Windows.  
+8. RPC (135) TCP/UDP → Permet l'exécution de services distants sur un réseau.  
+9. LEMP → Stack de serveurs web utilisant Linux, Nginx, MySQL/MariaDB et PHP.  
+10. DYNAMIC (49152-65535) TCP → Plage de ports utilisée pour les connexions temporaires (sessions éphémères).  
+		
+------------------------------------------------------------------
+
+# VPN
+
+1/ Création d'un tunnel VPN avec IPSec sur PfSense
+ 
+### Explication
+un tunnel vpn permet la connection à distance de manière sécurisé entre deux sites (dit site-to-site)
+ 
+### Procédure
+sur PfSense, ce rendre dans l'onglet "VPN"  puis IPsec
+cliquer sur "Add p1"
+ 
+#### Description
+>la description est à usage indicatif, généralement on indique la destination du tunnel
+ 
+#### Disabled
+>décocher cette case pour que le tunnel soit opérationnel une fois la configuration terminé
+ 
+#### Key Exchange Version
+>spécifier que version vous souhaitez utilisé, IKEv2 est préférable car plus sécurisé mais assuré que le pare-feu de l'autre coté supporte cette version, sinon utilisé IKEv1
+ 
+#### Internet Protocol
+>généralement IPv4 est utilisé mais si vous souhaitez utilisé IPv6, c'est ici que vous le spécifié
+ 
+#### Interface
+>indiquer l'interface sur laquelle vous allez mettre en place votre tunnel (en général la WAN) référez vous à votre infrastructure
+ 
+#### Remove Gateway
+>entré l'adresse IP de l'interface de **Destination**
+ 
+---
+### La prochaine partie concerne l'authentification de la phase1 de IPsec
+nous garderons les informations par défaut pour une question de simplicité, vous pouvez changer la méthode d'authentification à votre guise mais faites attention à savoir ce que vous faites
+ 
+#### Authentification Method
+>laissez "Mutual PSK"
+ 
+#### My Identifier
+> identifiant utilisé pour l'authentification
+ 
+#### Peer Identifier
+> par default "Peer IP address"
+ 
+#### Pre-shared Key
+> utilisé une clé sure; au minimum 10 caractère, minuscules, majuscules, chiffres et symboles.
+> Vous pouvez demandé à PfSense de généré une clef pour vous en cliquant sur "generate new pre-shared key"
+> 
+> **ATTENTION** vous devrez rentré **exactement cette clef** lors de la configuration sur l'autre pare-feu, je vous conseil de la copier-coller dans un bloc note
+ 
+---
+### La partie suivante concerne l'encryption de la phase1 de IPsec
+ 
+#### Encryption Algorithm
+> utilisé la méthode d'encryption **AES** avec une taille de **256bits**
+ 
+#### Hash algorithm
+> si les deux pare-feu support le hash "SHA256" utilisé le, sinon utilisé la méthode de hash la plus efficace disponible sur les deux appareils
+ 
+#### DH Group
+>la valeur pas défaut 14(2048) est OK, vous pouvez utilisé une valeur plus élevé mais cela consomera plus sur le CPU
+ 
+### L'expiration et le remplacement
+cette section control de quel façon et à quel fréquence la phase 1 sera négocier à nouveau
+ 
+#### Life Time
+> la valeur par défaut 28800 est suffisante
+ 
+Les autres valeur (**Rekey Time**, **Reauth Time**, **Rand Time**) devrait être laissé ainsi car un calcul est à faire; par défaut, cette configuration est correcte.
+ 
+### La section avancé
+la section avancé contient quelques paramètres intéressant:
+ 
+#### Child SA close action
+> sélectionné "restart/reconnect" pour reconnecter la phase 2 si elle est déconnecter
+ 
+#### Dead Peer Detection
+> cocher la case si pas fait et laisser les valeur par défaut; ce paramètre permet de savoir si l'hote distant est toujours "en vie"
+ 
+cliquer sur **save** et la phase1 est maintenant configuré
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ## configuration de la phase 2
+ 
+cliquer sur **"show phase 2 entries"** puis **"add p2"**
+ 
+#### Description
+> comme pour la phase , on indique habituellement ici les réseaux connecté
+ 
+#### Disable
+>désactive la phase si cocher
+ 
+#### Mode
+> Nous configurons un tunnel IPv4, laissez donc la valeur par défaut
+ 
+#### local network
+> vous pouvez indiquez manuellement l'adresse IP de votre réseau local; cependant on recommande de laisser "LAN subnet" dans le cas ou l'adresse changerez dans le futur, le tunnel continuerez de fonctionner
+ 
+#### NAT/BINAT
+>Si du NAT est en place sur votre réseau, configuré le ici; sinon laissez à "none"
+ 
+#### Remote Network
+>indiqué ici le réseau de destination du tunnel
+ 
+---
+
+### la section suivante concerne le cryptage du trafique entre les deux site
+ 
+#### Protocol
+>défini à ESP pour le cryptage
+ 
+#### Encryption Algorithm & hash algorithm
+> Les meilleurs pratique sont d'utilisé un AEAD (chiffrement authentifié) tel que AES-CGM; cependant vérifié que les deux coté du tunnel le supporte.
+ 
+si oui:
+> sélectionné AES256-CGM avec une taille de 128 bits et ne sélectionné pas d'algorithme de hash
+ 
+si non:
+>utilisé AES avec une taille de 256 et un algorithme de hash tel que SHA256. Si cela n'est pas supporté par les deux coté, utilisé les algorithmes les plus fort à votre disposition
+ 
+#### PFS (Perfect Forward Secrecy)
+>ce paramètre est optionnel mais permet de protéger la clef de certaines attaques, vous pouvez laissez la valeur par défaut
+ 
+#### Life Time
+> comme pour la phase1, laissez les valeurs par défaut
+ 
+vérifié les informations renseigné puis sauvegardé et appliqué les changements.
+ 
+## mise en place des règles de pare-feu pour le tunnel
+ 
+rendez-vous dans l'onglet pare-feu puis règles, et enfin dans la partie "IPsec"
+ 
+vous pouvez indiqué les règles de trafique que vous voulez, cependant assuré vous que les adresses source/ destination correspondent au IP de vos deux sites.
+ 
+FELICITATION VOTRE SITE A EST CONFIGURE !
+ 

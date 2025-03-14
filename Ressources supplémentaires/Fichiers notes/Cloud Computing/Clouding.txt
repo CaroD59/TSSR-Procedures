@@ -1,0 +1,179 @@
+Virtualisation et Cloud Computing
+
+------------------------------------------------------------------
+
+# Mettre IP statique
+# > Aller dans la petite planète en bas à droite
+# > Paramètres réseaux > Centre réseau et partage > Ethernet 0 (carte réseau) > Propriétés > Protocole Internet version 4 (TCP/IPv4)
+# > Exemple IP : 192.168.75.10 - Masque : 255.255.255.0 - Passerelle : 192.168.75.2 - DNS préféré : 192.168.75.10
+# > Pour connaitre la passerelle : Edit > Virtual Network Editor > VMnet8 en NAT > Nat Settings
+
+# > Gestionnaire de serveur > Gérer > Ajouter des rôles et fonctionnalités
+
+# Installation AD DS
+
+# > Ajouter une nouvelle forêt qui sera notre domaine
+# > Redémarrer
+# > Dans "CE PC", clique droit, propriétés, modifier.
+# > Redémarrer et se connecter sur DOMAINE\Administrateur
+
+# Installation DNS
+# > L'installer et aller dans Outils > DNS
+# > Cliquer sur notre domaine et cliquer sur Zones de recherche inversés > Nouvelle zone
+# > Tout par défaut
+# > Exemple d'ID réseau : 192.168.1. et ne rien mettre dans le quatrième octet
+# > Terminer
+# > Clique droit sur notre zone et nouveau pointeur (PTR)
+# > Parcourir jusqu'à notre domaine hôte (A), nom de l'hôte doit ressembler à : nommachine.domaine.local
+# > Redémarrer
+# > Vérifier dans CMD avec nslookup
+
+# > Zones de recherches direct > m2i.local > Nouvel hôte (AAA)
+# > Ajout d'ESXI-1, EXSI-2, VCENTER avec les adresses IP qui suivent à l'AD
+
+# Installation DHCP
+
+# > Aller dans Terminer configuration DHCP
+# > Tout par défaut
+# > Aller dans Outils > DHCP > IPv4 > Nouvelle étendue
+# > Exemple de Nom : 192.168.1.0 - Adresse IP de début : 192.168.1.11 - Adresse IP de fin : 192.168.1.50
+# > Tout par défaut
+# > Pour Routeur (passerelle par défaut) on peut ajouter la passerelle comme par exemple : 192.168.1.254 qu'on a renseigné plus haut
+# > Terminer
+
+------------------------------------------------------------------
+
+# Installation VMVisor
+
+# > Création d'une VM pour EXSI-1
+# > Mettre l'iso VMVisor
+# > Configurer les paramètres network
+
+# > Création d'une VM pour EXSI-2
+# > Mettre l'iso VMVisor
+# > Configurer les paramètres network
+
+------------------------------------------------------------------
+
+# Installation vCenter
+
+# > Installer.exe
+# > Cible du déploiement du dispositif :
+	# > Nom de l'hôte ESXI : adresse ip de l'ESXI
+	# > Se connecter avec root et MDP
+# > Ajouter nom et MDP VM
+# > Configurer les paramètres réseau
+	# > Nom de domaine complet : VCENTER.m2i.local
+	# > Adresse IP : IP du VCENTER renseigné dans le DNS
+	# > Passerelle par défaut : Edit > Virtual Network Editor > VMnet8 en NAT > Nat Settings
+	# > Server DNS : IP de l'AD
+
+/!\ Erreur :
+1) VCENTER, impossible de connecter sur ordi physique
+-> Vérification carte réseau ordi physique, désactivation carte apipa
+-> Ou désactiver sur edit > virtual network editor, vmnet
+-> VMNet8 
+
+------------------------------------------------------------------
+
+# Installation VCSA
+
+# > Configuration du dispositif :
+	# > Mode de synchronisation de l'heire : NTP
+	# > Serveur NTP : IP de l'AD
+	# > Accès SSH : Activé
+# > Configuration SSO :
+	# > Créer un domaine SSO
+		# > Nom de domaine : vsphere.local
+		# > Nom de l'utilisateur : administrator
+		# > MDP
+# > Terminer
+
+
+
+
+https://192.168.75.11/
+https://192.168.75.12/
+
+root
+MDP
+> Navigateur > Surveiller
+
+Pour joindre un domaine :
+# > Gérer > Sécurité et utilisateurs > Authentification > Joindre le domaine
+	# > domaine.local
+	# > nom d'utilisateur du domaine
+	# > son mot de passe
+
+https://vcenter.m2i.local
+
+administrator@vsphere.local
+MDP
+
+https://vcenter.m2i.local:5480
+
+administrator@vsphere.local
+MDP
+
+
+# > Actions > Nouveau centre de données > ESXI
+# > Sur ESXI > Actions > Nouveau cluster > Nom : ESXI > Ok
+# > Configurer > Ajouter des hôtes > Ajout des servers ESXI > Ok
+
+/!\ Erreur :
+1) ESXI en mode de maintenance
+-> Clique droit sur l'adresse IP
+-> Mode maintenance
+-> Quitter le mode de maintenance
+
+2) FQDN indatapé
+-> Changer dans le DNS de l'EXSI le localhost en ESXI-1
+-> Gérer > Sécurité et utilisateurs > Authentification > Joindre le domaine
+	-> domaine.local
+	-> nom d'utilisateur du domaine
+	-> son mot de passe
+
+------------------------------------------------------------------
+
+# ISCSI
+
+CMD 
+
+C:\Users\Administrateur.WIN-65KPQPNUINR>diskpart
+
+Microsoft DiskPart version 10.0.14393.0
+
+Copyright (C) 1999-2013 Microsoft Corporation.
+Sur l’ordinateur : SERVER-WINDOWS
+
+DISKPART> san
+
+Stratégie SAN : Mettre hors connexion les disques partagés
+
+DISKPART> san policy=onlineall
+
+DiskPart a réussi à modifier la stratégie SAN pour le système d’exploitation actuellement démarré.
+
+DISKPART> san
+
+Stratégie SAN : Mettre en ligne tous les disques
+
+
+
+# > 1) Autorisation des droits au serveur via les IP sur l'AD
+	# > Services de fichiers et de stockage > ISCSI
+	# > Création disques virtuels ISCSI
+
+# > 2) Création Datastore ISCSI
+
+Dans https://192.168.75.11/
+	 https://192.168.75.12/
+	 
+# > Aller dans Adapteurs > Configurer ISCSI > Activer
+# > Ajouter une cible dynamique > Mettre IP de ton AD
+
+# > Aller dans Banques de données > Nouvelle banque de données
+# > VMFS > Tout par défaut > Cliquer oui pour valider le formatage du volume
+# > Logiquement la base de données se met sur les deux ESXI
+
+

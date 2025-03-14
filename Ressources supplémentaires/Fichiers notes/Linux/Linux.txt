@@ -1,0 +1,131 @@
+LINUX
+
+------------------------------------------------------------------
+
+
+# Commandes de base :
+
+# Affiche le répertoire de travail actuel
+- pwd
+# Liste les fichiers dans le répertoire actuel
+- ls
+# Copie des fichiers ou répertoires
+- cp fichier destination
+# Copie un répertoire de manière récursive
+- cp -r fichier destination
+# Copie en préservant les attributs du fichier
+- cp -a fichier destination
+
+# Renommer un fichier
+- mv fichier nouveaunomfichier
+  
+# Éditeur de texte en ligne de commande. Pour quitter, tape :wq pour sauvegarder ou :x pour quitter sans sauvegarder
+- vi ou vim
+
+------------------------------------------------------------------
+
+# Gestion des utilisateurs et groupes :
+
+# Se connecter en tant que super-utilisateur (root)
+- su -
+# Ajouter un nouvel utilisateur
+- adduser prenom
+# Modifier le mot de passe d’un utilisateur.
+- passwd nom
+# Ajouter un utilisateur au groupe `sudo` pour lui donner des privilèges administratifs
+- usermod -aG sudo prenom
+# Supprime un utilisateur et son répertoire personnel
+- userdel -r user
+# Affiche les groupes d’un utilisateur
+- groups user
+# Créer un groupe
+- groupadd nomgroupe
+# Supprimer un groupe
+- groupdel nomgroupe
+
+------------------------------------------------------------------
+
+# Permissions et droits d’accès :
+
+# Modifier les permissions des fichiers et répertoires
+- chmod
+  # Exemple : `chmod 764 fichier.txt` (lecture, écriture, exécution pour le propriétaire, lecture et écriture pour le groupe, lecture pour les autres)
+  # Utilisation de l'octal : Les droits sont codés de 0 à 7, avec `r = 4`, `w = 2`, `x = 1`
+# Changer le propriétaire d’un fichier ou répertoire
+- chown
+  # Exemple : `chown -R user /home/user/*` pour changer récursivement le propriétaire
+# Changer le groupe propriétaire d’un fichier ou répertoire
+- chgrp nomgroupe fichier
+
+------------------------------------------------------------------
+
+# Recherche de fichiers :
+
+# Recherche de fichiers
+- find . -name fichier
+# Le point signifie le répertoire actuel, sinon il faut mettre le chemin
+# Recherche un répertoire nommé `document`
+- find /home -type d -name document
+# Cherche les fichiers vides
+- find / -type f -empty
+
+# Recherche rapide de fichiers
+- locate :
+  # Installation : `apt install mlocate`
+  # Exemple : `locate fichier`
+
+------------------------------------------------------------------
+
+# Gestion des packages :
+
+# Met à jour la liste des packages
+- apt-get update
+# Met à jour les packages installés à la dernière version disponible
+- apt-get upgrade
+# Met à jour les packages et gère les dépendances lors d’une migration de version
+- apt-get dist-upgrade
+# Installer un package
+- apt-get install package
+# Désinstaller un package
+- apt-get remove package
+# Supprimer les 
+# Recherche un package par mot-clé
+- apt-cache search
+
+------------------------------------------------------------------
+
+# Création de liens :
+
+# Créer un lien physique
+- ln
+  # Exemple : `ln fichier destination/nouveaunomfichier`
+# Créer un lien symbolique
+- ln -s
+  # Exemple : `ln -s dossier/ nouveaunom`
+  
+  ------------------------------------------------------------------
+
+# Alias et raccourcis :
+
+# Pour faciliter l'utilisation de commandes comme `apt-get update` et `apt-get upgrade`, tu peux créer un alias.
+  # Exemple : Ajouter `alias maj='apt-get update && apt-get upgrade'` dans le fichier `.bashrc` pour utiliser `maj` comme raccourci.
+
+------------------------------------------------------------------
+
+# Commandes utiles pour la sécurité et la gestion des utilisateurs :
+
+# Affiche la liste des utilisateurs
+- cat /etc/passwd
+# Affiche la liste des groupes
+- cat /etc/group
+# Affiche les informations sensibles sur les mots de passe des utilisateurs
+- cat /etc/shadow
+
+------------------------------------------------------------------
+
+# Autres commandes pratiques :
+
+# Affiche l'arborescence des répertoires
+- tree
+  # Installation : `apt-get install tree`
+  # Exemple : `tree /home`

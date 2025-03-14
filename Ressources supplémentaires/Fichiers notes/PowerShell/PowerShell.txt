@@ -1,0 +1,92 @@
+POWERSHELL
+
+------------------------------------------------------------------
+
+# Installer VMTools :
+- Get-PSDrive
+- cd d:
+- ls
+- .\setup.exe
+
+
+------------------------------------------------------------------
+
+# Machine 1
+
+- Rename-Computer -NewName AD-M2I-1
+- Restart-Computer -Force
+- $env:COMPUTERNAME
+
+# Désactiver pare-feu :
+- netsh advfirewall set allprofiles state off
+
+# Ajout ADDS Services :
+- Add-WindowsFeature AD-Domain-Services
+
+# Ajout domaine :
+- Install-ADDSForest -CreateDnsDelegation:$false -DatabasePath "C:\Windows\ntds" -DomainMode "Win2012" -DomainName "m2i-core.local" -DomainNetbiosName "m2i-core" -ForestMode "Win2012" -InstallDns:$true -LogPath "C:\Windows\NTDS" -NoRebootOnCompletion:$false -SysvolPath "C:\Windows\SYSVOL" -Force:$true
+
+# Changer IP :
+- netsh interface ipv4 set address name= Ethernet0 static 192.168.10.1 255.255.255.0
+
+# Ajout DHCP :
+- Install-WindowsFeature -name dhcp -includemanagementtools
+- Add-DhcpServerInDC -DnsName AD-M2I-1 192.168.10.1
+- Add-DhcpServerv4Scope -Name "M2I-Core" -StartRange 192.168.10.10 -EndRange 192.168.10.50 -SubnetMask 255.255.255.0
+- Set-DhcpServerv4OptionDefinition -OptionId 3 -DefaultValue 192.168.10.254
+- Set-DhcpServerv4OptionDefinition -OptionId 6 -DefaultValue 192.168.10.1
+- Set-DhcpServerv4OptionDefinition -OptionId 15 -DefaultValue M2I-Core.local
+
+
+# Vérifier que tout est installé :
+- Get-WindowsFeature -Name DHCP
+- Get-WindowsFeature -Name AD-Domain-Services
+
+# Vérifier informations :
+- Get-ADDomainController
+- Get-ComputerInfo | Select-Object CsDomain, CsDomainRole
+
+# Vérifier l'étendu DCHP :
+- Get-DhcpServerv4Scope
+
+
+------------------------------------------------------------------
+
+# Machine 2 (Server) :
+
+- powershell
+
+- Rename-Computer -NewName AD-M2I-1-Server
+- Restart-Computer (-force)
+- $env:COMPUTERNAME
+
+# Désactiver pare-feu :
+- netsh advfirewall set allprofiles state off
+
+# Changer IP :
+- netsh interface ipv4 set address name= Ethernet0 static 192.168.10.2 255.255.255.0
+
+# Joindre machine au domaine :
+# Pour connaitre l'index de l'interface faire : Get-Netadapter
+- Set-DnsClientServerAddress -InterfaceIndex 3 -ServerAddresses 192.168.10.1
+- Add-Computer -ComputerName AD-M2I-1-Server -DomainName M2I-Core.local
+
+
+# /!\ Si ça marche pas :
+# - Vérifier si on ping : ping 192.168.10.1
+# - Vérifier DNS : nslookup M2I-Core.local
+# - Vérifier réseau : les addresses IP doivent être sur le même réseau !
+# - Redémarrer l'ordinateur
+
+
+# Rendre server -> additionnel :
+- Add-WindowsFeature AD-Domain-Services
+- Restart-Computer (-force)
+
+
+# Faire echap deux fois quand on nous demande le mot de passe, selectionner "autre utilisateur" et remplir les informations.
+
+
+- $password = ConvertTo-SecureString -AsPlainText -String Azerty1 -force
+- Install-ADDSDomainController -DomainName M2I-Core.local -DatabasePath "C:\Windows\NTDS" -LogPath "C:\Windows\NTDS" -SysvolPath "C:\Windows\SYSVOL" -InstallDns -ReplicationSourceDC AD-M2I-1.M2i-core.local -SafeModeAdministratorPassword $password -NoRebootOnCompletion
+- Restart-Computer (-force)

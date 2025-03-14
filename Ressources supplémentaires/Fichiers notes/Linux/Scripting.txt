@@ -1,0 +1,124 @@
+SCRIPTING
+
+------------------------------------------------------------------
+
+nano fichier.sh
+
+Mettre dedans :
+#!/bin/bash
+
+echo "text"
+
+ls -l
+
+chmod u+x fichier
+
+ls -l
+
+cat fichier
+
+./fichier
+
+
+
+
+
+
+
+pour les flemmards qui veulent crée leur script plus facilement, copier coller ça dans un script:
+ 
+rendez le exécutable puis quand vous voulez faire un nouveau script taper:
+ 
+./<nom de votre script> <nom du script a crée>
+ 
+Bash
+#!/bin/bash
+touch $1
+chmod 744 $1
+echo "#!/bin/bash" >> $1
+nano $1
+
+
+
+
+
+
+
+DHCP
+
+apt-get install isc-dhcp-server
+
+sudo nano /etc/network/interfaces
+auto ens33
+iface ens33 inet static
+    address 192.168.200.100
+    netmask 255.255.255.0
+    gateway 192.168.200.254*
+	
+cp /etc/dhcp/dhcpd.conf /etc/dhcp/dhcpd.conf.sav
+
+sudo nano /etc/dhcp/dhcpd.conf
+subnet 192.168.200.0 netmask 255.255.255.0 {
+    range 192.168.200.10 192.168.200.50;
+    option subnet-mask 255.255.255.0;
+    option domain-name-servers 8.8.8.8;
+    option domain-name "m2i.local";
+    option routers 192.168.200.254;
+    option broadcast-address 192.168.200.255;
+    default-lease-time 600;
+    max-lease-time 7200;
+}
+
+sudo nano /etc/resolv.conf
+domain m2i.local
+search m2i.local
+nameserver 192.168.200.100
+nameserver 192.168.200.254
+
+
+Server DHCP -> edit -> virtual network editor -> vmnet8 -> changesettings -> vmnet8 -> décoche use local DHCP service
+Client -> clic droit -> settings -> network adapter -> custom -> vmnet8 (nat)
+
+
+
+sudo systemctl restart isc-dhcp-server
+
+
+
+
+DNS
+
+apt-get install dnsutils
+
+sudo nano /etc/hostname
+srv-lx01.m2i.local
+
+sudo nano /etc/network/interfaces
+    dns-nameservers 192.168.200.100
+    dns-domain m2i.local
+
+sudo nano /etc/hosts
+127.0.0.1       localhost
+127.0.1.1       srv-lx01.m2i.local       srv-lx01
+192.168.200.100 srv-lx01.m2i.local       srv-lx01
+192.168.200.102 srv-lx01.m2i.local       srv-lx02
+192.168.200.103 srv-lx01.m2i.local       srv-lx03
+192.168.200.104 srv-lx01.m2i.local       srv-lx04
+192.168.200.105 srv-lx01.m2i.local       srv-lx05
+
+# The following lines are desirable for IPv6 capable hosts
+::1     localhost ip6-localhost ip6-loopback
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+
+sudo nano /etc/resolv.conf
+domain m2i.local
+search m2i.local
+nameserver 192.168.200.100
+nameserver 192.168.200.254
+
+apt-get install bind9
+
+Apache
+MariaDB / MySQL
+WordPress

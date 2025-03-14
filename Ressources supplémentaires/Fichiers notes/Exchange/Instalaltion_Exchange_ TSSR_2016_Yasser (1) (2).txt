@@ -1,0 +1,67 @@
+﻿Serveur AD1
+
+Etape 1: Préparer une machine virtuelle sous Windows server 2016   
+en mode Data Center avec GUI ( de préférence ):
+Processeur: 1, RAM: 4096 Mo, Disque: 40 Go , Host-Only 
+
+Au premier Démarrage il faut :
+Renommer la machine en AD1 , fixer l'adresse IP en 192.168.1.10, et n'oublie un Snapshot
+
+Etape 2: Installer le rôle AD DS
+- Créer une foret et un domaine (AFCI.local) , n'oublier d'ajouter la zone de recherche inverse et directe (si ce n'est pas fait ) 
+ désactiver les mises à jours automatiques et connectez vous en tant que administrateur.
+
+Etape 3: Préparation de AD pour installer Exchange
+
+1) Avec la console PowerShell taper la commande suivante:
+
+• Install-WindowsFeature RSAT-ADDS
+
+2) Redémarrer votre serveur. 
+
+3) Extraire l'iso de Exchange 2016 (récupéré sur le NAS-TSSR  ou https://www.microsoft.com/fr-fr/download/confirmation.aspx?id=41994 ) sur votre machine. dans la racine C:\ de préférence
+
+4) Ouvrir la console classique CMD (windows+R) et placer le à la racine du disque (EX: C:) puis dans le répertoire d'installation ( EX : C:\EXCH)
+
+5) Taper les trois commandes suivantes:
+
+• Setup.exe /PrepareSchema /IAcceptExchangeServerLicenseTerms
+
+• Setup.exe /PrepareAD /OrganizationName:M2I /IAcceptExchangeServerLicenseTerms
+
+• Setup.exe /PrepareAllDomains /IAcceptExchangeServerLicenseTerms 
+
+et pour finaliser cette étape redémarrer votre serveur.
+
+Serveur  EXCH
+
+Etape 1: Préparer une machine virtuelle sous Windows server 2016 
+en mode Data Center avec GUI ( de préférence ):
+Processeur: 1, RAM: 8192 Mo, Disque: 120 Go , Host-Only 
+
+Etape 2: Après la configuration de votre serveur et le rajouté au domaine, avec la console PowerShell copier la commande suivante ( en une seule ligne ou à l'aide d'un script) :
+
+Install-WindowsFeature AS-HTTP-Activation, NET-Framework-45-Features, Web-Mgmt-Console, WAS-Process-Model, Web-Asp-Net45, Web-Basic-Auth, 
+Web-Client-Auth, Web-Digest-Auth, Web-Dir-Browsing, Web-Dyn-Compression, Web-Http-Errors, Web-Http-Logging, Web-Http-Redirect, Web-Http-Tracing, 
+Web-ISAPI-Ext, Web-ISAPI-Filter, Web-Lgcy-Mgmt-Console, Web-Metabase, Web-Mgmt-Console, Web-Mgmt-Service, Web-Net-Ext45, Web-Request-Monitor, Web-Server, 
+Web-Stat-Compression, Web-Static-Content, Web-Windows-Auth, Web-WMI, Windows-Identity-Foundation, RPC-over-HTTP-proxy, RSAT-Clustering, RSAT-Clustering-CmdInterface,
+RSAT-Clustering-Mgmt, RSAT-Clustering-Powershell, Desktop-Experience
+
+redémarrer votre serveur.
+
+Etape 3: Avant de suivre vers l’installation d’exchange sur le EXCH, il faut installer les utilitaires suivants :
+Installer les composants microsoft un par un, et laisser les options par défaut.
+
+UcmaRuntimeSetup.exe (UcmaRuntimeSetup.exe)
+FilterPack64bit.exe (https://www.microsoft.com/fr-FR/download/details.aspx?id=17062)
+filterpack2010sp1-kb2460041-x64fullefile-fr-fr.exe (https://www.microsoft.com/fr-fr/download/confirmation.aspx?id=26604)
+
+
+Etape 4: insérer l'iso d'Exchange 2016 sur votre machine (l'extraire de la même façon que sur AD1) et lancer le setup :
+
+• Choisir ne pas mettre à jour votre serveur ( vous pouvez le faire ultérieurement si besoin )
+• Choisir les rôles Boite Email et Accès Clients
+
+Une fois les vérifications sont terminées procéder à l'installation de Exchange et laisser les choix par défaut ( prendre une pause café ^_^ )
+
+
