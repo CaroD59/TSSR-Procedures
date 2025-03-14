@@ -1,0 +1,1 @@
+New-Item "C:\data\$env:username.txt" -type File

@@ -1,0 +1,10 @@
+[Settings]
+Priority=Default
+
+[Default]
+DeployRoot=\\WIN-BN62G5IGQHL\DeploymentShare$
+KeyboardLocalePE=040c:0000040c
+UserDomain=m2i
+UserID=Administrateur
+UserPassword=Azerty1
+SkipBDDWelcome=YES

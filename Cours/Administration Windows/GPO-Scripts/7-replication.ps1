@@ -1,0 +1,1 @@
+Copy-item \\SRV-PDC\Logo -Recurse C:\M2i-Data

@@ -1,0 +1,1 @@
+Move-Item -Path C:\documents1\ -Destination \\SRV-PDC\Logo\archive

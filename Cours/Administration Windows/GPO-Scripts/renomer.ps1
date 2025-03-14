@@ -1,0 +1,1 @@
+Rename-Item -Path "\\PC-1\data\cv.txt" -NewName "M2i-cv.txt"

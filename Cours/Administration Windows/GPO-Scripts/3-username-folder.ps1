@@ -1,0 +1,1 @@
+New-Item -Path "C:\data\$env:username" -Itemtype Directory
