@@ -114,3 +114,13 @@
 ---
 
 🎯 **Ce document récapitule la mise en place d'un environnement sécurisé avec PfSense, Windows Server, Windows Client et Debian, incluant la configuration réseau et firewall.**
+
+
+<p align="center">
+  <img src="../Procédures/images/pfsense.png" alt="PfSense" style="display: block; margin: auto; max-width: 100%; height: auto;"/>
+</p>
+
+
+<p align="center">
+  <img src="../Procédures/images/esxi.png" alt="ESXI" style="display: block; margin: auto; max-width: 100%; height: auto;"/>
+</p>

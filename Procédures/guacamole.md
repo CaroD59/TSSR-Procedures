@@ -133,3 +133,7 @@ systemctl restart tomcat9 guacd mariadb;
 ```
 
 L'installation de Guacamole est maintenant terminée ! Vous pouvez accéder à l'interface web en vous rendant sur `http://<votre_serveur>:8080/guacamole`.
+
+<p align="center">
+  <img src="../Procédures/images/guacamole.png" alt="Guacamole" style="display: block; margin: auto; max-width: 100%; height: auto;"/>
+</p>

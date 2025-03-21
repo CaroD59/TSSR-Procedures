@@ -42,3 +42,7 @@ Il y aura plusieurs protocoles à autoriser pour ce service :
 Il est important d'ajouter en dernière ligne :  
 `deny any any`  
 Pour empêcher tout autre protocole de passer après ceux qui ont été autorisés.
+
+<p align="center">
+  <img src="../Procédures/images/pfsense.png" alt="PfSense" style="display: block; margin: auto; max-width: 100%; height: auto;"/>
+</p>
