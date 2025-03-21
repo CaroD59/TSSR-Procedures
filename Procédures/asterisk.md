@@ -231,3 +231,8 @@ reload
    - **Login** : `100`  
    - **Mot de passe** : `1234`  
    - **Transport** : `UDP + TCP`  
+
+
+<p align="center">
+  <img src="Procédures/images/asterisk.png" alt="Asterisk" style="display: block; margin: auto; max-width: 100%; height: auto;"/>
+</p>
