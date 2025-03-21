@@ -99,5 +99,5 @@ echo "Mot de passe: glpi"
 ```
 
 <p align="center">
-  <img src="../Procédures/images/glpi.png" alt="GLPi" style="display: block; margin: auto; max-width: 100%; height: auto;"/>
+  <img src="../Procédures/images/glpi.gif" alt="GLPi" style="display: block; margin: auto; max-width: 100%; height: auto;"/>
 </p>
