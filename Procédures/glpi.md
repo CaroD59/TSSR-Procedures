@@ -97,3 +97,7 @@ echo "Identifiant et mot de passe pour se connecter à l'interface de GLPI"
 echo "Identifiant: glpi"
 echo "Mot de passe: glpi"
 ```
+
+<p align="center">
+  <img src="../Procédures/images/glpi.png" alt="GLPi" style="display: block; margin: auto; max-width: 100%; height: auto;"/>
+</p>
