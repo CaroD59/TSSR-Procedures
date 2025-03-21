@@ -234,5 +234,5 @@ reload
 
 
 <p align="center">
-  <img src="Procédures/images/asterisk.png" alt="Asterisk" style="display: block; margin: auto; max-width: 100%; height: auto;"/>
+  <img src="/Procédures/images/asterisk.png" alt="Asterisk" style="display: block; margin: auto; max-width: 100%; height: auto;"/>
 </p>
